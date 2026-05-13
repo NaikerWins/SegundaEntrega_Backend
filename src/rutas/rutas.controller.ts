@@ -1,8 +1,10 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Put, Delete, Query, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { RutasService } from './rutas.service';
 import { CreateRutaDto } from './dto/create-ruta.dto';
+import { SecurityGuard } from '../guards/security/security.guard';
 import { UpdateRutaDto } from './dto/update-ruta.dto';
 
+@UseGuards(SecurityGuard)
 @Controller('rutas')
 export class RutasController {
 

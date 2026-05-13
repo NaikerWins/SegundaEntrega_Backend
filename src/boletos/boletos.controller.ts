@@ -1,16 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { BoletosService } from './boletos.service';
-import { CreateBoletoDto } from './dto/create-boleto.dto';
-import { UpdateBoletoDto } from './dto/update-boleto.dto';
+import { AbordajeDto } from './dto/abordaje.dto';
+import { DescensoDto } from './dto/descenso.dto';
+import { SecurityGuard } from '../common/guards/security.guard';
 
+@UseGuards(SecurityGuard)
 @Controller('boletos')
 export class BoletosController {
   constructor(private readonly boletosService: BoletosService) {}
-
-  @Post()
-  create(@Body() createBoletoDto: CreateBoletoDto) {
-    return this.boletosService.create(createBoletoDto);
-  }
 
   @Get()
   findAll() {
@@ -18,17 +15,19 @@ export class BoletosController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.boletosService.findOne(+id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.boletosService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBoletoDto: UpdateBoletoDto) {
-    return this.boletosService.update(+id, updateBoletoDto);
+  // HU-2-003: Abordaje
+  @Post('abordaje')
+  abordaje(@Body() dto: AbordajeDto) {
+    return this.boletosService.registrarAbordaje(dto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.boletosService.remove(+id);
+  // HU-2-004: Descenso
+  @Post('descenso')
+  descenso(@Body() dto: DescensoDto) {
+    return this.boletosService.registrarDescenso(dto);
   }
 }

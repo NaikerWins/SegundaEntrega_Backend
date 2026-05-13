@@ -1,6 +1,11 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, OneToMany } from "typeorm";
 import { Empresa } from "../../empresas/entities/empresa.entity";
+<<<<<<< HEAD
 import { GPS } from "../../gps/entities/gps.entity";
+=======
+import { GPS } from "src/gps/entities/gps.entity";
+import { Programacion } from "src/programaciones/entities/programaciones.entity";
+>>>>>>> 998cff58316a5f07447dfd43220bcd9e0e01a281
 
 @Entity('buses')
 export class Bus {
@@ -38,4 +43,7 @@ export class Bus {
     @OneToOne(() => GPS, { cascade: true, eager: true })
     @JoinColumn({ name: 'gps_id' })
     gps?: GPS;
+
+    @OneToMany(() => Programacion, (programacion) => programacion.bus)
+    programaciones?: Programacion[];
 }

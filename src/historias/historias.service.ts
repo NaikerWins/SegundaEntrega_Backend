@@ -1,26 +1,62 @@
-import { Injectable } from '@nestjs/common';
-import { CreateHistoriaDto } from './dto/create-historia.dto';
-import { UpdateHistoriaDto } from './dto/update-historia.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Boleto } from '../boletos/entities/boleto.entity';
 
 @Injectable()
 export class HistoriasService {
-  create(createHistoriaDto: CreateHistoriaDto) {
-    return 'This action adds a new historia';
-  }
+  constructor(
+    @InjectRepository(Boleto)
+    private readonly boletoRepo: Repository<Boleto>,
+  ) {}
 
-  findAll() {
-    return `This action returns all historias`;
-  }
+  // HU-2-005: Historial de viajes de un ciudadano
+  async getHistorialCiudadano(ciudadano_id: number) {
+    const boletos = await this.boletoRepo.find({
+      where: { ciudadano_id, estado: 'completado' },
+      relations: [
+        'programacion',
+        'programacion.ruta',
+        'programacion.ruta.nodos',
+        'programacion.ruta.nodos.paradero',
+        'paradero_abordaje',
+        'paradero_descenso',
+      ],
+      order: { fecha_abordaje: 'DESC' },
+    });
 
-  findOne(id: number) {
-    return `This action returns a #${id} historia`;
-  }
+    return boletos.map((boleto) => {
+      const ruta = boleto.programacion?.ruta;
+      const paraderos = ruta?.nodos
+        ?.sort((a, b) => a.orden - b.orden)
+        .map((nodo) => nodo.paradero) || [];
 
-  update(id: number, updateHistoriaDto: UpdateHistoriaDto) {
-    return `This action updates a #${id} historia`;
-  }
+      // Calcular tiempo total de viaje en minutos
+      let tiempo_total = null;
+      if (boleto.fecha_abordaje && boleto.fecha_descenso) {
+        const diff =
+          new Date(boleto.fecha_descenso).getTime() -
+          new Date(boleto.fecha_abordaje).getTime();
+        tiempo_total = Math.round(diff / 60000);
+      }
 
-  remove(id: number) {
-    return `This action removes a #${id} historia`;
+      return {
+        boleto_id: boleto.id,
+        estado: boleto.estado,
+        monto: boleto.monto,
+        fecha_abordaje: boleto.fecha_abordaje,
+        fecha_descenso: boleto.fecha_descenso,
+        tiempo_total_minutos: tiempo_total,
+        bus_id: boleto.programacion?.bus_id,
+        conductor_id: boleto.programacion?.conductor_id,
+        ruta: {
+          id: ruta?.id,
+          nombre: ruta?.nombre,
+          paraderos_completos: paraderos,
+        },
+        paradero_abordaje: boleto.paradero_abordaje,
+        paradero_descenso: boleto.paradero_descenso,
+      };
+    });
   }
 }

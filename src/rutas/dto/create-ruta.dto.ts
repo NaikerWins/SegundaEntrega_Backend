@@ -25,7 +25,6 @@ export class CreateNodoRutaDto {
 export class CreateRutaDto {
     @IsString()
     @IsNotEmpty()
-    @MinLength(3)
     @MaxLength(150)
     nombre?: string;
 
@@ -44,4 +43,13 @@ export class CreateRutaDto {
     @ValidateNested({ each: true })
     @Type(() => CreateNodoRutaDto)
     nodos!: CreateNodoRutaDto[];
+
+    @IsInt()
+    tiempo_estimado?: number;
+
+    
+    //Id, nombre, descripcion y tarifa: number
 }
+    
+
+

@@ -1,3 +1,4 @@
+import { Programacion } from "src/programaciones/entities/programacione.entity";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Nodo } from "../../nodos/entities/nodo.entity";
 
@@ -23,4 +24,11 @@ export class Ruta {
 
     @OneToMany(() => Nodo, (nodo) => nodo.ruta, { cascade: true })
     nodos?: Nodo[];
+
+    @Column({ nullable: true })
+    tiempo_estimado!: number;
+
+    @OneToMany(() => Programacion, (programacion) => programacion.ruta)
+    programaciones?: Programacion[];
 }
+
