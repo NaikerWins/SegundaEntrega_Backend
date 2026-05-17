@@ -1,14 +1,14 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { ProgramacionesService } from './programaciones.service';
-import { CreateProgramacioneDto } from './dto/create-programacione.dto';
-import { UpdateProgramacioneDto } from './dto/update-programacione.dto';
+import { CreateProgramacionDto } from './dto/create-programaciones.dto';
+import { UpdateProgramacionDto } from './dto/update-programaciones.dto';
 
 @Controller('programaciones')
 export class ProgramacionesController {
   constructor(private readonly programacionesService: ProgramacionesService) {}
 
   @Post()
-  create(@Body() createProgramacioneDto: CreateProgramacioneDto) {
+  create(@Body() createProgramacioneDto: CreateProgramacionDto) {
     return this.programacionesService.create(createProgramacioneDto);
   }
 
@@ -23,7 +23,7 @@ export class ProgramacionesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProgramacioneDto: UpdateProgramacioneDto) {
+  update(@Param('id') id: string, @Body() updateProgramacioneDto: UpdateProgramacionDto) {
     return this.programacionesService.update(+id, updateProgramacioneDto);
   }
 

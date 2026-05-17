@@ -42,4 +42,9 @@ export class MetodospagociudadanoController {
   return this.metodospagociudadanoService.confirmarRecarga(referencia, estado, monto);
  }
 
+  @Get('ciudadano/:ciudadano_id')
+  findByCiudadano(@Param('ciudadano_id') ciudadano_id: string) {
+      return this.metodospagociudadanoService.findOrCreateByCiudadano(ciudadano_id);
+  }
+
 }

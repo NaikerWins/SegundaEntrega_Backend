@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Boleto } from './entities/boleto.entity';
-import { Programacion } from '../programaciones/entities/programacion.entity';
+import { Programacion } from '../programaciones/entities/programacione.entity';
 import { Paradero } from '../paraderos/entities/paradero.entity';
 import { AbordajeDto } from './dto/abordaje.dto';
 import { DescensoDto } from './dto/descenso.dto';
@@ -31,7 +31,7 @@ export class BoletosService {
     }
 
     // 2. Verificar capacidad
-    if (programacion.ocupacion_actual >= programacion.capacidad_maxima) {
+      if ((programacion.ocupacion_actual ?? 0) >= (programacion.capacidad_maxima ?? 0)) {
       throw new BadRequestException(
         'El bus está lleno, no se puede abordar',
       );
@@ -50,14 +50,14 @@ export class BoletosService {
       programacion: programacion,
       paradero_abordaje_id: dto.paradero_abordaje_id,
       estado: 'activo',
-      monto: programacion.ruta.tarifa,
+      monto: programacion.ruta?.tarifa,
       fecha_abordaje: new Date(),
     });
 
     await this.boletoRepo.save(boleto);
 
     // 5. Incrementar ocupación del bus
-    programacion.ocupacion_actual += 1;
+    programacion.ocupacion_actual = (programacion.ocupacion_actual ?? 0) + 1;
     await this.programacionRepo.save(programacion);
 
     return {
@@ -95,8 +95,8 @@ export class BoletosService {
 
     // 4. Liberar cupo en la programación
     const programacion = boleto.programacion;
-    if (programacion.ocupacion_actual > 0) {
-      programacion.ocupacion_actual -= 1;
+    if ((programacion.ocupacion_actual ?? 0) > 0) {
+    programacion.ocupacion_actual = (programacion.ocupacion_actual ?? 0) - 1;
       await this.programacionRepo.save(programacion);
     }
 
@@ -122,4 +122,19 @@ export class BoletosService {
     if (!boleto) throw new NotFoundException(`Boleto #${id} no encontrado`);
     return boleto;
   }
+  
+  async getCiudadanosPorRuta(rutaId: number): Promise<string[]> {
+      const boletos = await this.boletoRepo
+          .createQueryBuilder('b')
+          .innerJoin('b.programacion', 'p')
+          .innerJoin('p.ruta', 'r')
+          .where('r.id = :rutaId', { rutaId })
+          .select('b.ciudadano_id', 'ciudadano_id')
+          .distinct(true)
+          .getRawMany();
+      
+      console.log('Boletos encontrados:', boletos);
+      return boletos.map(b => b.ciudadano_id);
+  }
+
 }

@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Paradero } from '../../paraderos/entities/paradero.entity';
-import { Programacion } from 'src/programaciones/entities/programacione.entity';
+import { Programacion } from '../../programaciones/entities/programacione.entity';
 
 @Entity('boletos')
 export class Boleto {
@@ -8,7 +8,7 @@ export class Boleto {
   id!: number;
 
   @Column()
-  ciudadano_id!: number;
+  ciudadano_id!: string;
 
   @Column()
   metodo_pago_id!: number;

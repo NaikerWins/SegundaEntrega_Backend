@@ -117,5 +117,36 @@ export class MetodosPagoCiudadanoService {
     };
   }
 
+  async findByCiudadano(ciudadano_id: string): Promise<MetodoPagoCiudadano[]> {
+      return this.mpcRepository.find({
+          where: { id_ciudadano: ciudadano_id },
+          relations: ['metodopago'],
+      });
+  }
+
+  async findOrCreateByCiudadano(ciudadano_id: string): Promise<MetodoPagoCiudadano[]> {
+    const existing = await this.mpcRepository.find({
+        where: { id_ciudadano: ciudadano_id },
+        relations: ['metodopago'],
+    });
+
+    if (existing.length > 0) return existing;
+
+    // No existe — crear uno automáticamente con saldo 0
+    const metodopago = await this.metodospagoService.findOne(1); // método de pago por defecto
+    if (!metodopago) throw new NotFoundException('No hay métodos de pago disponibles');
+
+    const nuevo = this.mpcRepository.create({
+        id_ciudadano: ciudadano_id,
+        saldo: 0,
+        monto: 0,
+        cargo: 0,
+        metodopago,
+    });
+
+    const guardado = await this.mpcRepository.save(nuevo);
+    return [guardado];
+}
+
 }
 

@@ -41,7 +41,7 @@ export class ParaderosService {
         Number(paradero.longitud),
       );
 
-      const rutas = paradero.nodos.map((nodo) => ({
+    const rutas = (paradero.nodos ?? []).map((nodo) => ({
         id: nodo.ruta?.id,
         nombre: nodo.ruta?.nombre,
       }));

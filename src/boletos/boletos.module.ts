@@ -7,8 +7,9 @@ import { Programacion } from 'src/programaciones/entities/programacione.entity';
 import { Paradero } from 'src/paraderos/entities/paradero.entity';
 
 @Module({
-imports: [TypeOrmModule.forFeature([Boleto, Programacion, Paradero])],
+  imports: [TypeOrmModule.forFeature([Boleto, Programacion, Paradero])],
   controllers: [BoletosController],
   providers: [BoletosService],
+  exports: [BoletosService],
 })
 export class BoletosModule {}

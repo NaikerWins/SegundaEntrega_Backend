@@ -150,4 +150,16 @@ export class TurnosService {
         Object.assign(turno, dto);
         return this.turnoRepository.save(turno);
     }
+
+    async validarConductorActivoPorBus(busId: number, fecha: Date): Promise<boolean> {
+        const turno = await this.turnoRepository.findOne({
+            where: {
+                bus: { id: busId },
+                estado: 'en_curso',
+            },
+            relations: ['conductor', 'bus'],
+        });
+        return !!turno;
+    }
+    
 }

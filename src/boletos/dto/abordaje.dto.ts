@@ -3,7 +3,7 @@ import { IsInt, IsNotEmpty } from 'class-validator';
 export class AbordajeDto {
   @IsInt()
   @IsNotEmpty()
-  ciudadano_id!: number;
+  ciudadano_id!: string;
 
   @IsInt()
   @IsNotEmpty()

@@ -7,6 +7,7 @@ import { UpdateProgramacionDto } from './dto/update-programaciones.dto';
 import { Programacion } from './entities/programaciones.entity';
 import { RutasService } from '../rutas/rutas.service';
 import { BusesService } from '../buses/buses.service';
+import { TurnosService } from '../turnos/turnos.service';
 
 @Injectable()
 export class ProgramacionesService {
@@ -17,6 +18,9 @@ export class ProgramacionesService {
     private readonly rutasService: RutasService,
 
     private readonly busesService: BusesService,
+
+    private readonly turnosService: TurnosService,
+
   ) {}
 
   private resolveId(value: any): number | undefined {
@@ -46,8 +50,8 @@ export class ProgramacionesService {
     const bus = await this.busesService.findOne(busId);
     if (!bus) throw new NotFoundException(`Bus with id ${busId} not found`);
 
-    // TODO: validar que el bus tenga un conductor asignado en ese horario
-    // await this.turnosService.validarConductorActivo(busId, new Date(createProgramacionDto.salida));
+    const tieneConductor = await this.turnosService.validarConductorActivoPorBus(busId, new Date(createProgramacionDto.salida));
+    if (!tieneConductor) throw new BadRequestException('El bus no tiene conductor asignado para ese horario');
 
     const programacion = this.programacionesRepository.create({
       salida: createProgramacionDto.salida ? new Date(createProgramacionDto.salida) : undefined,

@@ -1,11 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, OneToMany } from "typeorm";
 import { Empresa } from "../../empresas/entities/empresa.entity";
-<<<<<<< HEAD
 import { GPS } from "../../gps/entities/gps.entity";
-=======
-import { GPS } from "src/gps/entities/gps.entity";
-import { Programacion } from "src/programaciones/entities/programaciones.entity";
->>>>>>> 998cff58316a5f07447dfd43220bcd9e0e01a281
+import { Programacion } from "../../programaciones/entities/programaciones.entity";
 
 @Entity('buses')
 export class Bus {

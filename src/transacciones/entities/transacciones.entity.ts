@@ -1,5 +1,5 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { MetodoPagoCiudadano } from "src/metodospagociudadano/entities/metodospagociudadano.entity";
+import { MetodoPagoCiudadano } from "../../metodospagociudadano/entities/metodospagociudadano.entity";
 
 @Entity('transacciones')
 export class Transaccion {

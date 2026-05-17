@@ -1,4 +1,4 @@
-import { IsNumber, IsNotEmpty, IsOptional, IsString, IsISO8601 } from "class-validator";
+import { IsNumber, IsNotEmpty, IsOptional, IsString, IsISO8601, IsObject } from "class-validator";
 import { Ruta } from "src/rutas/entities/ruta.entity";
 import { Bus } from "src/buses/entities/bus.entity";
 
@@ -16,9 +16,11 @@ export class CreateProgramacionDto {
     @IsOptional()
     recurrencia?: string;
     
+    @IsObject()
     @IsNotEmpty()
     ruta?: Ruta;
 
+    @IsObject()
     @IsNotEmpty()
     bus?: Bus;
 

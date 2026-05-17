@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Param, ParseIntPipe, UseGuards } from '@ne
 import { BoletosService } from './boletos.service';
 import { AbordajeDto } from './dto/abordaje.dto';
 import { DescensoDto } from './dto/descenso.dto';
-import { SecurityGuard } from '../common/guards/security.guard';
+import { SecurityGuard } from '../guards/security.guard';
 
 @UseGuards(SecurityGuard)
 @Controller('boletos')

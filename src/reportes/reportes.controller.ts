@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, Headers } from '@nestjs/common';
 import { ReportesService } from './reportes.service';
 
 @Controller('reportes')
@@ -18,9 +18,12 @@ export class ReportesController {
     @Get('distribucionporcentual')
     distribucionPorcentual(
         @Query('fechaInicio') fechaInicio?: string,
-        @Query('fechaFin') fechaFin?: string
+        @Query('fechaFin') fechaFin?: string,
+        @Query('rutaId') rutaId?: string,
+        @Headers('authorization') authorization?: string,
     ) {
-        return this.reporteService.distribucionEtaria(fechaInicio, fechaFin);
+        const token = authorization?.replace('Bearer ', '');
+        return this.reporteService.distribucionEtaria(fechaInicio, fechaFin, token, rutaId ? +rutaId : undefined);
     }
 
     @Get('incidentes/:meses')
@@ -29,5 +32,3 @@ export class ReportesController {
     }
 
 }
-
-

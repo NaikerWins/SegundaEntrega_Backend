@@ -3,30 +3,19 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { RutasModule } from './rutas/rutas.module';
 import { ParaderosModule } from './paraderos/paraderos.module';
-import { NodosModule } from './nodos/nodos.module';
 import { BoletosModule } from './boletos/boletos.module';
 import { HistoriasModule } from './historias/historias.module';
-import { APP_GUARD } from '@nestjs/core';
-import { SecurityGuard } from './guards/security.guard';
 import { EmpresasModule } from './empresas/empresas.module';
 import { BusesModule } from './buses/buses.module';
 import { GpsModule } from './gps/gps.module';
-import { PersonasModule } from './personas/personas.module';
-import { ConductoresModule } from './conductores/conductores.module';
-import { FotosModule } from './fotos/fotos.module';
-import { IncidentesModule } from './incidentes/incidentes.module';
-import { ComentariosIncidentesModule } from './comentarios_incidentes/comentarios_incidentes.module';
-import { TurnosModule } from './turnos/turnos.module';
-import { NotificacionesModule } from './gateways/notifications/notifications.module';
 import { ProgramacionesModule } from './programaciones/programaciones.module';
 import { MetodospagoModule } from './metodospago/metodospago.module';
 import { MetodospagociudadanoModule } from './metodospagociudadano/metodospagociudadano.module';
 import { ReportesModule } from './reportes/reportes.module';
 import { TransaccionesModule } from './transacciones/transacciones.module';
-
+import { NodosModule } from './nodos/nodos.module';
 
 @Module({
-  providers: [{ provide: APP_GUARD, useClass: SecurityGuard }],
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync({
@@ -40,26 +29,17 @@ import { TransaccionesModule } from './transacciones/transacciones.module';
         password: configService.get<string>('DB_PASS'),
         database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: false,
+        synchronize: false, // Usaremos migraciones
       }),
     }),
     RutasModule,
     ParaderosModule,
-    NodosModule,
     BoletosModule,
+    NodosModule,
     HistoriasModule,
-    ProgramacionesModule,
-    BusesModule,
     EmpresasModule,
     BusesModule,
     GpsModule,
-    PersonasModule,
-    ConductoresModule,
-    FotosModule,
-    IncidentesModule,
-    ComentariosIncidentesModule,
-    TurnosModule,
-    NotificacionesModule,
     ProgramacionesModule,
     MetodospagoModule,
     MetodospagociudadanoModule,
