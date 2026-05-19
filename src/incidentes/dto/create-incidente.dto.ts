@@ -30,8 +30,8 @@ export class CreateIncidenteDto {
     busId!: number;
 
     @IsInt()
-    @IsNotEmpty()
-    conductorId!: number;
+@IsNotEmpty()
+conductorId!: number;
 
     @IsArray()
     @IsOptional()
