@@ -13,7 +13,7 @@ export class HistoriasService {
   // HU-2-005: Historial de viajes de un ciudadano
   async getHistorialCiudadano(ciudadano_id: string) {
   const boletos = await this.boletoRepo.find({
-    where: { ciudadano_id, estado: 'completado' },
+    where: { ciudadano_id },
     relations: [
       'programacion',
       'programacion.ruta',
