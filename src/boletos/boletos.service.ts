@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Boleto } from './entities/boleto.entity';
-import { Programacion } from '../programaciones/entities/programacione.entity';
+import { Programacion } from '../programaciones/entities/programaciones.entity';
 import { Paradero } from '../paraderos/entities/paradero.entity';
 import { AbordajeDto } from './dto/abordaje.dto';
 import { DescensoDto } from './dto/descenso.dto';
@@ -113,6 +113,23 @@ export class BoletosService {
       relations: ['programacion', 'paradero_abordaje', 'paradero_descenso'],
     });
   }
+  async getBoletosActivos(): Promise<Boleto[]> {
+
+  return await this.boletoRepo.find({
+    where: {
+      estado: 'activo',
+    },
+    relations: [
+      'programacion',
+      'programacion.ruta',
+      'programacion.bus',
+    ],
+    order: {
+      fecha_abordaje: 'DESC',
+    },
+  });
+
+}
 
   async findOne(id: number): Promise<Boleto> {
     const boleto = await this.boletoRepo.findOne({
@@ -136,5 +153,19 @@ export class BoletosService {
       console.log('Boletos encontrados:', boletos);
       return boletos.map(b => b.ciudadano_id);
   }
+
+  async getProgramacionesActivas() {
+
+  return await this.programacionRepo.find({
+    where: {
+      estado: 'activa',
+    },
+    relations: ['ruta', 'bus'],
+    order: {
+      salida: 'ASC',
+    },
+  });
+
+}
 
 }

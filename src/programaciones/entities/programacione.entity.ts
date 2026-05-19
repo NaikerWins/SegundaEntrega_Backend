@@ -1,1 +1,0 @@
-export { Programacion } from './programaciones.entity';

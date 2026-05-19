@@ -15,7 +15,7 @@ export class Programacion {
     @Column({ nullable: true })
     tolerancia?: number;
 
-    @Column({ default: 'programado' })
+    @Column({ default: 'activa' })
     estado?: string;
 
     @Column({ nullable: true })

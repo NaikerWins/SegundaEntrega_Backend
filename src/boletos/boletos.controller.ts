@@ -12,6 +12,17 @@ export class BoletosController {
     return this.boletosService.findAll();
   }
 
+  
+  @Get('programaciones-activas')
+getProgramacionesActivas() {
+  return this.boletosService.getProgramacionesActivas();
+}
+
+@Get('activos')
+getBoletosActivos() {
+  return this.boletosService.getBoletosActivos();
+}
+
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.boletosService.findOne(id);
@@ -28,4 +39,5 @@ export class BoletosController {
   descenso(@Body() dto: DescensoDto) {
     return this.boletosService.registrarDescenso(dto);
   }
+  
 }

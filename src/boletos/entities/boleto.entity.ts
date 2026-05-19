@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Paradero } from '../../paraderos/entities/paradero.entity';
-import { Programacion } from '../../programaciones/entities/programacione.entity';
+import { Programacion } from '../../programaciones/entities/programaciones.entity';
 
 @Entity('boletos')
 export class Boleto {
