@@ -16,8 +16,14 @@ import { ReportesModule } from './reportes/reportes.module';
 import { TransaccionesModule } from './transacciones/transacciones.module';
 import { SecurityGuard } from './guards/security/security.guard';
 import { BusesModule } from './buses/buses.module';
+<<<<<<< HEAD
 import { MonitoreoModule } from './monitoreo/monitoreo.module';
 import { ScheduleModule } from '@nestjs/schedule';
+=======
+import { GruposModule } from './grupos/grupos.module'; 
+import { PqrsModule } from './pqrs/pqrs.module';
+import { PreferenciasClimaModule } from './preferencias-clima/preferencias-clima.module';
+>>>>>>> 6b7a771 (HU09-HU013)
 
 @Module({
   imports: [
@@ -53,6 +59,10 @@ import { ScheduleModule } from '@nestjs/schedule';
     MetodospagociudadanoModule,
     ReportesModule,
     TransaccionesModule,
+    GruposModule,
+    PqrsModule,
+    PreferenciasClimaModule,
+
   ],
   providers: [
     {
