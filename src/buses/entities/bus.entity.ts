@@ -32,6 +32,15 @@ export class Bus {
     @Column({ unique: true })
     codigoQR?: string;
 
+    @Column('json', { nullable: true })
+    ubicacion?: { lat: number; lng: number };
+
+    @Column({ nullable: true })
+    ultima_actualizacion?: Date;
+
+    @Column({ nullable: true, default: 0 })
+    paraderoActualIndice?: number;
+
     @ManyToOne(() => Empresa, (empresa) => empresa.buses, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'empresa_id' })
     empresa?: Empresa;

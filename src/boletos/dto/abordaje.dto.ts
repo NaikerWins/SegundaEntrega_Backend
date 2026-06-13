@@ -1,7 +1,7 @@
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 
 export class AbordajeDto {
-  @IsInt()
+  @IsString()             
   @IsNotEmpty()
   ciudadano_id!: string;
 

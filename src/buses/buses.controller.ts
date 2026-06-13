@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query } 
 import { BusesService } from './buses.service';
 import { CreateBusDto } from './dto/create-bus.dto';
 import { UpdateBusDto } from './dto/update-bus.dto';
+import { ActualizarUbicacionDto } from 'src/monitoreo/dto/actualizar-ubicacion.dto';
 
 @Controller('buses')
 export class BusesController {
@@ -47,4 +48,11 @@ export class BusesController {
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.busesService.remove(id);
     }
+    @Post(':id/ubicacion')
+async actualizarUbicacion(
+  @Param('id', ParseIntPipe) id: number,
+  @Body() dto: ActualizarUbicacionDto,
+) {
+  return this.busesService.actualizarUbicacion(id, dto);
+}
 }

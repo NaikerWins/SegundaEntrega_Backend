@@ -1,22 +1,9 @@
-import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
+import { PartialType } from '@nestjs/mapped-types';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { CreateGrupoDto } from './create-grupo.dto';
 
-export class UpdateGrupoDto {
-    @IsString()
-    @IsOptional()
-    @MinLength(3)
-    @MaxLength(100)
-    nombre?: string;
-
-    @IsString()
-    @IsOptional()
-    @MaxLength(300)
-    descripcion?: string;
-
-    @IsString()
-    @IsOptional()
-    imagen?: string;
-
-    @IsBoolean()
-    @IsOptional()
-    activo?: boolean;
+export class UpdateGrupoDto extends PartialType(CreateGrupoDto) {
+  @IsOptional()
+  @IsBoolean()
+  activo?: boolean;
 }

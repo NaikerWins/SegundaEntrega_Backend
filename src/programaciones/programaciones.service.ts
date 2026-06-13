@@ -30,41 +30,35 @@ export class ProgramacionesService {
     return undefined;
   }
 
-  async create(createProgramacionDto: CreateProgramacionDto): Promise<Programacion> {
-    const rutaId = this.resolveId(createProgramacionDto.ruta);
-    const busId = this.resolveId(createProgramacionDto.bus);
-
-    if (!rutaId) throw new BadRequestException('ruta id is required');
-    if (!busId) throw new BadRequestException('bus id is required');
-
-    const ruta = await this.rutasService.findOne(rutaId);
-    if (!ruta) throw new NotFoundException(`Ruta with id ${rutaId} not found`);
-
-    if (!createProgramacionDto.salida) throw new BadRequestException('salida is required');
-
-    const conflicto = await this.programacionesRepository.findOne({
-        where: { bus: { id: busId }, salida: new Date(createProgramacionDto.salida) }
-    });
-    if (conflicto) throw new BadRequestException(`El bus ya tiene una programación en ese horario`);
-
-    const bus = await this.busesService.findOne(busId);
-    if (!bus) throw new NotFoundException(`Bus with id ${busId} not found`);
-
-    const tieneConductor = await this.turnosService.validarConductorActivoPorBus(busId, new Date(createProgramacionDto.salida));
-    if (!tieneConductor) throw new BadRequestException('El bus no tiene conductor asignado para ese horario');
+  async create(dto: CreateProgramacionDto) {
 
     const programacion = this.programacionesRepository.create({
-      salida: createProgramacionDto.salida ? new Date(createProgramacionDto.salida) : undefined,
-      estado: 'programado',
-      tolerancia: createProgramacionDto.tolerancia,
-      recurrencia: createProgramacionDto.recurrencia,
-      ruta,
-      bus
+
+        salida: dto.salida ? new Date(dto.salida) : undefined,
+
+        tolerancia: dto.tolerancia,
+
+        recurrencia: dto.recurrencia,
+
+        estado: dto.estado || 'activa',
+
+        conductor_id: dto.conductor_id,
+
+        capacidad_maxima: dto.capacidad_maxima,
+
+        ocupacion_actual: dto.ocupacion_actual || 0,
+
+        ruta: dto.ruta
+            ? { id: dto.ruta.id }
+            : undefined,
+
+        bus: dto.bus
+            ? { id: dto.bus.id }
+            : undefined,
     });
 
-    return this.programacionesRepository.save(programacion);
-
-  }
+    return await this.programacionesRepository.save(programacion);
+}
 
   findAll(): Promise<Programacion[]> {
     return this.programacionesRepository.find({ relations: ['ruta', 'bus'] });

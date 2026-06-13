@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitCinemaSchema1779168557234 implements MigrationInterface {
-    name = 'InitCinemaSchema1779168557234'
+export class InitCinemaSchema1781217254449 implements MigrationInterface {
+    name = 'InitCinemaSchema1781217254449'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE \`metodospago\` (\`id\` int NOT NULL AUTO_INCREMENT, \`tipo\` varchar(255) NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
@@ -15,12 +15,14 @@ export class InitCinemaSchema1779168557234 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE \`nodos\` (\`id\` int NOT NULL AUTO_INCREMENT, \`orden\` int NOT NULL, \`distanciaDesdeAnterior\` decimal(10,2) NULL, \`tiempoEstimado\` int NULL, \`ruta_id\` int NULL, \`paradero_id\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`rutas\` (\`id\` int NOT NULL AUTO_INCREMENT, \`nombre\` varchar(255) NOT NULL, \`codigo\` varchar(255) NOT NULL, \`descripcion\` text NULL, \`tarifa\` decimal(10,2) NOT NULL, \`activa\` tinyint NOT NULL DEFAULT 1, \`tiempo_estimado\` int NULL, UNIQUE INDEX \`IDX_3e124d911cc0232d53384f7b4b\` (\`codigo\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`boletos\` (\`id\` int NOT NULL AUTO_INCREMENT, \`ciudadano_id\` varchar(255) NOT NULL, \`metodo_pago_id\` int NOT NULL, \`estado\` varchar(255) NOT NULL DEFAULT 'activo', \`paradero_abordaje_id\` int NULL, \`paradero_descenso_id\` int NULL, \`fecha_abordaje\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`fecha_descenso\` datetime NULL, \`monto\` decimal(10,2) NOT NULL, \`programacion_id\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`programaciones\` (\`id\` int NOT NULL AUTO_INCREMENT, \`salida\` datetime NOT NULL, \`tolerancia\` int NULL, \`estado\` varchar(255) NOT NULL DEFAULT 'programado', \`recurrencia\` varchar(255) NULL, \`conductor_id\` int NULL, \`capacidad_maxima\` int NULL, \`ocupacion_actual\` int NOT NULL DEFAULT '0', \`ruta_id\` int NULL, \`bus_id\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
-        await queryRunner.query(`CREATE TABLE \`buses\` (\`id\` int NOT NULL AUTO_INCREMENT, \`placa\` varchar(255) NOT NULL, \`modelo\` varchar(255) NOT NULL, \`anio\` int NOT NULL, \`capacidadSentados\` int NOT NULL, \`capacidadParados\` int NOT NULL, \`estado\` varchar(255) NOT NULL, \`fotoBus\` longtext NULL, \`codigoQR\` varchar(255) NOT NULL, \`empresa_id\` int NULL, \`gps_id\` int NULL, UNIQUE INDEX \`IDX_e78e1b9df21315024e40a67d02\` (\`placa\`), UNIQUE INDEX \`IDX_c8f2252b39d5ec90ebaee17852\` (\`codigoQR\`), UNIQUE INDEX \`REL_82ab7d96ba98fcc0520d96f9e7\` (\`gps_id\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`programaciones\` (\`id\` int NOT NULL AUTO_INCREMENT, \`salida\` datetime NOT NULL, \`tolerancia\` int NULL, \`estado\` varchar(255) NOT NULL DEFAULT 'activa', \`recurrencia\` varchar(255) NULL, \`conductor_id\` int NULL, \`capacidad_maxima\` int NULL, \`ocupacion_actual\` int NOT NULL DEFAULT '0', \`ruta_id\` int NULL, \`bus_id\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`buses\` (\`id\` int NOT NULL AUTO_INCREMENT, \`placa\` varchar(255) NOT NULL, \`modelo\` varchar(255) NOT NULL, \`anio\` int NOT NULL, \`capacidadSentados\` int NOT NULL, \`capacidadParados\` int NOT NULL, \`estado\` varchar(255) NOT NULL, \`fotoBus\` longtext NULL, \`codigoQR\` varchar(255) NOT NULL, \`ubicacion\` json NULL, \`ultima_actualizacion\` datetime NULL, \`paraderoActualIndice\` int NULL DEFAULT '0', \`empresa_id\` int NULL, \`gps_id\` int NULL, UNIQUE INDEX \`IDX_e78e1b9df21315024e40a67d02\` (\`placa\`), UNIQUE INDEX \`IDX_c8f2252b39d5ec90ebaee17852\` (\`codigoQR\`), UNIQUE INDEX \`REL_82ab7d96ba98fcc0520d96f9e7\` (\`gps_id\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`fotos\` (\`id\` int NOT NULL AUTO_INCREMENT, \`url\` varchar(255) NOT NULL, \`incidente_id\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`comentarios_incidente\` (\`id\` int NOT NULL AUTO_INCREMENT, \`contenido\` text NOT NULL, \`autor\` varchar(255) NOT NULL, \`fecha\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`incidente_id\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`incidentes\` (\`id\` int NOT NULL AUTO_INCREMENT, \`tipo\` enum ('accidente_menor', 'falla_mecanica', 'congestion_inesperada', 'problema_pasajeros') NOT NULL, \`gravedad\` enum ('bajo', 'medio', 'alto', 'critico') NOT NULL, \`estado\` enum ('pendiente', 'en_revision', 'resuelto') NOT NULL DEFAULT 'pendiente', \`descripcion\` text NOT NULL, \`notificadoSupervisor\` tinyint NOT NULL DEFAULT 0, \`fecha\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`bus_id\` int NULL, \`conductor_id\` int NULL, \`turno_id\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`CREATE TABLE \`turnos\` (\`id\` int NOT NULL AUTO_INCREMENT, \`fechaProgramada\` datetime NULL, \`fechaInicio\` datetime NULL, \`fechaFin\` datetime NULL, \`estado\` enum ('programado', 'en_curso', 'finalizado') NOT NULL DEFAULT 'programado', \`observaciones\` text NULL, \`conductor_id\` int NULL, \`bus_id\` int NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`suscripciones_paradero\` (\`id\` int NOT NULL AUTO_INCREMENT, \`ciudadano_id\` varchar(255) NOT NULL, \`ruta_id\` int NOT NULL, \`paradero_id\` int NOT NULL, \`minutos_anticipacion\` int NOT NULL, \`activa\` tinyint NOT NULL DEFAULT 1, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`preferencias_clima\` (\`id\` int NOT NULL AUTO_INCREMENT, \`ciudadano_id\` varchar(255) NOT NULL, \`ciudad\` varchar(255) NOT NULL DEFAULT 'Bogotá', \`horario_viaje\` time NOT NULL, \`alertas_activas\` tinyint NOT NULL DEFAULT 1, \`canal_preferido\` varchar(255) NOT NULL DEFAULT 'push', PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
         await queryRunner.query(`ALTER TABLE \`metodospagociudadano\` ADD CONSTRAINT \`FK_c77f59278175e2a146dd4f24325\` FOREIGN KEY (\`metodopago_id\`) REFERENCES \`metodospago\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`transacciones\` ADD CONSTRAINT \`FK_14eaf29780b39bd6fc2c76a09ed\` FOREIGN KEY (\`metodopagociudadanoId\`) REFERENCES \`metodospagociudadano\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`conductores\` ADD CONSTRAINT \`FK_bc0266d66cf1bb0692fe14a01c6\` FOREIGN KEY (\`persona_id\`) REFERENCES \`personas\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
@@ -29,6 +31,7 @@ export class InitCinemaSchema1779168557234 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE \`boletos\` ADD CONSTRAINT \`FK_365ae3b69628ff0f5c5e24618e0\` FOREIGN KEY (\`programacion_id\`) REFERENCES \`programaciones\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`boletos\` ADD CONSTRAINT \`FK_d2a2fe9d49e3513d9b2d29b938f\` FOREIGN KEY (\`paradero_abordaje_id\`) REFERENCES \`paraderos\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`boletos\` ADD CONSTRAINT \`FK_9ec25d3123e49c5f2b74c7f68ad\` FOREIGN KEY (\`paradero_descenso_id\`) REFERENCES \`paraderos\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`programaciones\` ADD CONSTRAINT \`FK_bd89e2d3e415b5de3c009b2ec66\` FOREIGN KEY (\`conductor_id\`) REFERENCES \`conductores\`(\`id\`) ON DELETE SET NULL ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`programaciones\` ADD CONSTRAINT \`FK_84ff5ccccc8d03befac42644d23\` FOREIGN KEY (\`ruta_id\`) REFERENCES \`rutas\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`programaciones\` ADD CONSTRAINT \`FK_268023a8b8d040f970ef1183716\` FOREIGN KEY (\`bus_id\`) REFERENCES \`buses\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE \`buses\` ADD CONSTRAINT \`FK_45fbb665b161ccb9b63acb9904c\` FOREIGN KEY (\`empresa_id\`) REFERENCES \`empresas\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
@@ -54,6 +57,7 @@ export class InitCinemaSchema1779168557234 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE \`buses\` DROP FOREIGN KEY \`FK_45fbb665b161ccb9b63acb9904c\``);
         await queryRunner.query(`ALTER TABLE \`programaciones\` DROP FOREIGN KEY \`FK_268023a8b8d040f970ef1183716\``);
         await queryRunner.query(`ALTER TABLE \`programaciones\` DROP FOREIGN KEY \`FK_84ff5ccccc8d03befac42644d23\``);
+        await queryRunner.query(`ALTER TABLE \`programaciones\` DROP FOREIGN KEY \`FK_bd89e2d3e415b5de3c009b2ec66\``);
         await queryRunner.query(`ALTER TABLE \`boletos\` DROP FOREIGN KEY \`FK_9ec25d3123e49c5f2b74c7f68ad\``);
         await queryRunner.query(`ALTER TABLE \`boletos\` DROP FOREIGN KEY \`FK_d2a2fe9d49e3513d9b2d29b938f\``);
         await queryRunner.query(`ALTER TABLE \`boletos\` DROP FOREIGN KEY \`FK_365ae3b69628ff0f5c5e24618e0\``);
@@ -62,6 +66,8 @@ export class InitCinemaSchema1779168557234 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE \`conductores\` DROP FOREIGN KEY \`FK_bc0266d66cf1bb0692fe14a01c6\``);
         await queryRunner.query(`ALTER TABLE \`transacciones\` DROP FOREIGN KEY \`FK_14eaf29780b39bd6fc2c76a09ed\``);
         await queryRunner.query(`ALTER TABLE \`metodospagociudadano\` DROP FOREIGN KEY \`FK_c77f59278175e2a146dd4f24325\``);
+        await queryRunner.query(`DROP TABLE \`preferencias_clima\``);
+        await queryRunner.query(`DROP TABLE \`suscripciones_paradero\``);
         await queryRunner.query(`DROP TABLE \`turnos\``);
         await queryRunner.query(`DROP TABLE \`incidentes\``);
         await queryRunner.query(`DROP TABLE \`comentarios_incidente\``);

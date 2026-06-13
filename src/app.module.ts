@@ -20,9 +20,17 @@ import { GruposModule } from './grupos/grupos.module';
 import { MensajesModule } from './mensajes/mensajes.module';
 import { MensajeriaModule } from './mensajeria/mensajeria.module';
 
+import { MonitoreoModule } from './monitoreo/monitoreo.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PqrsModule } from './pqrs/pqrs.module';
+import { PreferenciasClimaModule } from './preferencias-clima/preferencias-clima.module';
+
+
 @Module({
   imports: [
+    
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -38,6 +46,8 @@ import { MensajeriaModule } from './mensajeria/mensajeria.module';
       }),
     }),
     RutasModule,
+    MonitoreoModule,
+    ScheduleModule,
     ParaderosModule,
     BoletosModule,
     NodosModule,
@@ -56,6 +66,9 @@ import { MensajeriaModule } from './mensajeria/mensajeria.module';
     MensajeriaModule,
     MensajesModule,
     GruposModule,
+    PqrsModule,
+    PreferenciasClimaModule,
+
   ],
   providers: [
     {

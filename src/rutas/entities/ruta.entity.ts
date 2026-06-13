@@ -1,4 +1,4 @@
-import { Programacion } from "../../programaciones/entities/programacione.entity";
+import { Programacion } from '../../programaciones/entities/programaciones.entity';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Nodo } from "../../nodos/entities/nodo.entity";
 

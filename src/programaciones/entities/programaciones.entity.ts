@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColum
 import { Ruta } from '../../rutas/entities/ruta.entity';
 import { Bus } from '../../buses/entities/bus.entity';
 import { Boleto } from '../../boletos/entities/boleto.entity';
+import { Conductor } from '../../conductores/entities/conductor.entity';
 
 @Entity('programaciones')
 export class Programacion {
@@ -15,7 +16,7 @@ export class Programacion {
     @Column({ nullable: true })
     tolerancia?: number;
 
-    @Column({ default: 'programado' })
+    @Column({ default: 'activa' })
     estado?: string;
 
     @Column({ nullable: true })
@@ -30,6 +31,10 @@ export class Programacion {
 
     @Column({ default: 0 })
     ocupacion_actual?: number;
+
+    @ManyToOne(() => Conductor, { onDelete: 'SET NULL' })
+@JoinColumn({ name: 'conductor_id' })
+conductor?: Conductor;
 
     // Relaciones
     @ManyToOne(() => Ruta, (ruta) => ruta.programaciones, { onDelete: 'CASCADE' })

@@ -1,39 +1,56 @@
-import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { GrupoPersona } from "./grupo-persona.entity";
-import { DestinatarioGrupo } from "../../mensajes/entities/destinatario-grupo.entity";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+
+import { GrupoPersona } from './grupo-persona.entity';
+import { MiembroGrupo } from './miembro-grupo.entity';
+import { DestinatarioGrupo } from '../../mensajes/entities/destinatario-grupo.entity';
 
 @Entity('grupos')
 export class Grupo {
-    @PrimaryGeneratedColumn()
-    id?: number;
+  @PrimaryGeneratedColumn()
+  id?: number;
 
-    @Column()
-    nombre?: string;
+  @Column()
+  nombre?: string;
 
-    @Column({ type: 'text', nullable: true })
-    descripcion?: string;
+  @Column({ type: 'text', nullable: true })
+  descripcion?: string;
 
-    @Column({ nullable: true })
-    imagen?: string;
+  @Column({ nullable: true })
+  imagen?: string;
 
-    @Column({ default: 'publico' })
-    tipo?: string; // publico | privado
+  @Column({ default: 'PUBLIC' })
+  tipo?: string;
 
-    @Column()
-    adminId?: string; // userId de Spring Boot
+  @Column({ nullable: true })
+  adminId?: string;
 
-    @Column()
-    adminNombre?: string;
+  @Column({ nullable: true })
+  adminNombre?: string;
 
-    @Column({ default: true })
-    activo?: boolean;
+  @Column({ nullable: true })
+  creadoPor?: string;
 
-    @CreateDateColumn()
-    fechaCreacion?  : Date;
+  @Column({ default: true })
+  activo?: boolean;
 
-    @OneToMany(() => GrupoPersona, (gp) => gp.grupo, { cascade: true })
-    miembros?: GrupoPersona[];
+  @CreateDateColumn()
+  fechaCreacion?: Date;
 
-    @OneToMany(() => DestinatarioGrupo, (dg) => dg.grupo)
-    mensajes?: DestinatarioGrupo[];
+  @CreateDateColumn()
+  creadoEn?: Date;
+
+  @OneToMany(() => GrupoPersona, (gp) => gp.grupo, { cascade: true })
+  miembros?: GrupoPersona[];
+
+  @OneToMany(() => MiembroGrupo, (m) => m.grupo, { cascade: true })
+  miembrosGrupo?: MiembroGrupo[];
+
+  @OneToMany(() => DestinatarioGrupo, (dg) => dg.grupo)
+  mensajes?: DestinatarioGrupo[];
 }

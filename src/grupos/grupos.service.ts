@@ -1,206 +1,504 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+
 import { Grupo } from './entities/grupo.entity';
 import { GrupoPersona } from './entities/grupo-persona.entity';
+
 import { CreateGrupoDto } from './dto/create-grupo.dto';
 import { UpdateGrupoDto } from './dto/update-grupo.dto';
+
 import { MensajeriaGateway } from '../mensajeria/mensajeria.gateway';
 
 @Injectable()
 export class GruposService {
+  constructor(
+    @InjectRepository(Grupo)
+    private readonly grupoRepository: Repository<Grupo>,
 
-    constructor(
-        @InjectRepository(Grupo)
-        private readonly grupoRepository: Repository<Grupo>,
-        @InjectRepository(GrupoPersona)
-        private readonly grupoPersonaRepository: Repository<GrupoPersona>,
-        private readonly mensajeriaGateway: MensajeriaGateway,
-    ) {}
+    @InjectRepository(GrupoPersona)
+    private readonly grupoPersonaRepository: Repository<GrupoPersona>,
 
-    async findAll(): Promise<Grupo[]> {
-        return this.grupoRepository.find({
-            where: { activo: true, tipo: 'publico' },
-            relations: ['miembros'],
-        });
+    private readonly mensajeriaGateway: MensajeriaGateway,
+  ) {}
+
+  async findPublicos(): Promise<Grupo[]> {
+    return this.grupoRepository.find({
+      where: [{ tipo: 'PUBLIC' }, { tipo: 'publico' }],
+      relations: ['miembros'],
+      order: { id: 'DESC' },
+    });
+  }
+
+  async findAll(): Promise<Grupo[]> {
+    return this.grupoRepository.find({
+      relations: ['miembros'],
+      order: { nombre: 'ASC' },
+    });
+  }
+
+  async findOne(id: number): Promise<Grupo> {
+    const grupo = await this.grupoRepository.findOne({
+      where: { id },
+      relations: ['miembros'],
+    });
+
+    if (!grupo) {
+      throw new NotFoundException('Grupo no encontrado');
     }
 
-    async findOne(id: number): Promise<Grupo> {
-        const grupo = await this.grupoRepository.findOne({
-            where: { id },
-            relations: ['miembros'],
-        });
-        if (!grupo) throw new NotFoundException('Grupo no encontrado');
-        return grupo;
+    return grupo;
+  }
+
+  async findByUsuario(userId: string): Promise<Grupo[]> {
+    const membresias = await this.grupoPersonaRepository.find({
+      where: {
+        userId,
+        bloqueado: false,
+      },
+      relations: ['grupo', 'grupo.miembros'],
+    });
+
+    return membresias.map((m) => m.grupo);
+  }
+
+  async findMisGrupos(userId: string): Promise<Grupo[]> {
+    return this.findByUsuario(userId);
+  }
+
+  async findMiembros(grupoId: number): Promise<GrupoPersona[]> {
+    return this.grupoPersonaRepository.find({
+      where: {
+        grupo: { id: grupoId },
+      },
+      order: {
+        fechaUnion: 'ASC',
+      },
+    });
+  }
+
+  // =========================
+  // CREATE (VERSIÓN NUEVA)
+  // =========================
+
+  async create(
+    dto: CreateGrupoDto,
+    userId: string,
+  ): Promise<Grupo> {
+    const grupo = this.grupoRepository.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+      imagen: dto.imagen,
+      tipo: dto.tipo ?? 'PUBLIC',
+      creadoPor: userId,
+      activo: true,
+    });
+
+    const grupoGuardado = await this.grupoRepository.save(grupo);
+
+    const admin = this.grupoPersonaRepository.create({
+      userId,
+      nombre: 'Administrador',
+      rol: 'admin',
+      grupo: grupoGuardado,
+    });
+
+    await this.grupoPersonaRepository.save(admin);
+
+    return this.findOne(grupoGuardado.id!);
+  }
+
+  // =========================
+  // CREATE (LEGACY)
+  // =========================
+
+  async createLegacy(
+    adminId: string,
+    adminNombre: string,
+    dto: CreateGrupoDto,
+  ): Promise<Grupo> {
+    if ((dto.miembros?.length ?? 0) < 2) {
+      throw new BadRequestException(
+        'El grupo debe tener al menos 2 miembros además del creador',
+      );
     }
 
-    async findByUsuario(userId: string): Promise<Grupo[]> {
-        const membresías = await this.grupoPersonaRepository.find({
-            where: { userId, bloqueado: false },
-            relations: ['grupo', 'grupo.miembros'],
-        });
-        return membresías.map((m) => m.grupo);
+    const grupo = this.grupoRepository.create({
+      nombre: dto.nombre,
+      descripcion: dto.descripcion,
+      imagen: dto.imagen,
+      tipo: dto.tipo,
+      adminId,
+      adminNombre,
+      activo: true,
+    });
+
+    const grupoGuardado = await this.grupoRepository.save(grupo);
+
+    const adminMiembro = this.grupoPersonaRepository.create({
+      userId: adminId,
+      nombre: adminNombre,
+      rol: 'admin',
+      grupo: grupoGuardado,
+    });
+
+    await this.grupoPersonaRepository.save(adminMiembro);
+
+    const miembros = (dto.miembros ?? []).map((m) =>
+      this.grupoPersonaRepository.create({
+        userId: m.userId,
+        nombre: m.nombre,
+        rol: 'miembro',
+        grupo: grupoGuardado,
+      }),
+    );
+
+    await this.grupoPersonaRepository.save(miembros);
+
+    (dto.miembros ?? []).forEach((m) => {
+      this.mensajeriaGateway.enviarMensajeDirecto(m.userId, {
+        tipo: 'bienvenida_grupo',
+        grupoId: grupoGuardado.id,
+        grupoNombre: grupoGuardado.nombre,
+        mensaje: `Fuiste agregado al grupo "${grupoGuardado.nombre}"`,
+      });
+    });
+
+    return this.findOne(grupoGuardado.id!);
+  }
+
+  // =========================
+  // JOIN NUEVO
+  // =========================
+
+  async unirse(
+    grupoId: number,
+    userId: string,
+    nombre?: string,
+  ): Promise<GrupoPersona> {
+    const grupo = await this.findOne(grupoId);
+
+    if (
+      grupo.tipo === 'privado' ||
+      grupo.tipo === 'PRIVATE'
+    ) {
+      throw new ForbiddenException(
+        'Este grupo es privado',
+      );
     }
 
-    // HU-3-006: Crear grupo
-    async create(
-        adminId: string,
-        adminNombre: string,
-        dto: CreateGrupoDto,
-    ): Promise<Grupo> {
-        if (dto.miembros.length < 2) {
-            throw new BadRequestException('El grupo debe tener al menos 2 miembros además del creador');
-        }
+    const existente =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+        },
+      });
 
-        const grupo = this.grupoRepository.create({
-            nombre: dto.nombre,
-            descripcion: dto.descripcion,
-            imagen: dto.imagen,
-            tipo: dto.tipo,
-            adminId,
-            adminNombre,
-            activo: true,
-        });
-
-        const grupoGuardado = await this.grupoRepository.save(grupo);
-
-        // Agregar al admin como miembro
-        const adminMiembro = this.grupoPersonaRepository.create({
-            userId: adminId,
-            nombre: adminNombre,
-            rol: 'admin',
-            grupo: grupoGuardado,
-        });
-        await this.grupoPersonaRepository.save(adminMiembro);
-
-        // Agregar los demás miembros
-        const miembros = dto.miembros.map((m) =>
-            this.grupoPersonaRepository.create({
-                userId: m.userId,
-                nombre: m.nombre,
-                rol: 'miembro',
-                grupo: grupoGuardado,
-            })
+    if (existente) {
+      if (existente.bloqueado) {
+        throw new BadRequestException(
+          'Estás bloqueado de este grupo',
         );
-        await this.grupoPersonaRepository.save(miembros);
+      }
 
-        // Notificar a los miembros via WebSocket
-        dto.miembros.forEach((m) => {
-            this.mensajeriaGateway.enviarMensajeDirecto(m.userId, {
-                tipo: 'bienvenida_grupo',
-                grupoId: grupoGuardado.id,
-                grupoNombre: grupoGuardado.nombre,
-                mensaje: `Fuiste agregado al grupo "${grupoGuardado.nombre}"`,
-            });
-        });
-
-        return this.findOne(grupoGuardado.id!);
+      throw new BadRequestException(
+        'Ya eres miembro de este grupo',
+      );
     }
 
-    async unirse(grupoId: number, userId: string, nombre: string): Promise<GrupoPersona> {
-        const grupo = await this.findOne(grupoId);
+    const miembro = this.grupoPersonaRepository.create({
+      userId,
+      nombre: nombre ?? 'Usuario',
+      rol: 'miembro',
+      grupo,
+    });
 
-        if (grupo.tipo === 'privado') {
-            throw new BadRequestException('Este grupo es privado, solo por invitación');
-        }
+    return this.grupoPersonaRepository.save(miembro);
+  }
 
-        const yaEsMiembro = await this.grupoPersonaRepository.findOne({
-            where: { grupo: { id: grupoId }, userId },
-        });
+  async salir(
+    grupoId: number,
+    userId: string,
+  ): Promise<any> {
+    const miembro =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+        },
+      });
 
-        if (yaEsMiembro) {
-            if (yaEsMiembro.bloqueado) {
-                throw new BadRequestException('Estás bloqueado de este grupo');
-            }
-            throw new BadRequestException('Ya eres miembro de este grupo');
-        }
-
-        const miembro = this.grupoPersonaRepository.create({
-            userId,
-            nombre,
-            rol: 'miembro',
-            grupo,
-        });
-
-        return this.grupoPersonaRepository.save(miembro);
+    if (!miembro) {
+      throw new NotFoundException(
+        'No eres miembro de este grupo',
+      );
     }
 
-    async salir(grupoId: number, userId: string): Promise<{ mensaje: string }> {
-        const miembro = await this.grupoPersonaRepository.findOne({
-            where: { grupo: { id: grupoId }, userId },
-            relations: ['grupo'],
+    if (miembro.rol === 'admin') {
+      const admins =
+        await this.grupoPersonaRepository.count({
+          where: {
+            grupo: { id: grupoId },
+            rol: 'admin',
+          },
         });
 
-        if (!miembro) throw new NotFoundException('No eres miembro de este grupo');
-
-        await this.grupoPersonaRepository.remove(miembro);
-
-        return { mensaje: 'Saliste del grupo correctamente' };
+      if (admins <= 1) {
+        throw new BadRequestException(
+          'Eres el único administrador. Promueve a otro antes de salir.',
+        );
+      }
     }
 
-    async removerMiembro(grupoId: number, adminId: string, userId: string): Promise<{ mensaje: string }> {
-        const grupo = await this.findOne(grupoId);
+    await this.grupoPersonaRepository.remove(miembro);
 
-        if (grupo.adminId !== adminId) {
-            throw new BadRequestException('Solo el administrador puede remover miembros');
-        }
+    return {
+      success: true,
+      mensaje: 'Saliste del grupo correctamente',
+    };
+  }
 
-        const miembro = await this.grupoPersonaRepository.findOne({
-            where: { grupo: { id: grupoId }, userId },
-        });
+  async removerMiembro(
+    grupoId: number,
+    adminId: string,
+    userId: string,
+  ): Promise<{ mensaje: string }> {
+    const grupo = await this.findOne(grupoId);
 
-        if (!miembro) throw new NotFoundException('El miembro no existe en este grupo');
-
-        // Notificar al miembro removido
-        this.mensajeriaGateway.enviarMensajeDirecto(userId, {
-            tipo: 'removido_grupo',
-            grupoId,
-            grupoNombre: grupo.nombre,
-            mensaje: `Fuiste removido del grupo "${grupo.nombre}"`,
-        });
-
-        await this.grupoPersonaRepository.remove(miembro);
-        return { mensaje: 'Miembro removido correctamente' };
+    if (grupo.adminId !== adminId) {
+      throw new BadRequestException(
+        'Solo el administrador puede remover miembros',
+      );
     }
 
-    async bloquearMiembro(grupoId: number, adminId: string, userId: string): Promise<{ mensaje: string }> {
-        const grupo = await this.findOne(grupoId);
+    const miembro =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+        },
+      });
 
-        if (grupo.adminId !== adminId) {
-            throw new BadRequestException('Solo el administrador puede bloquear miembros');
-        }
-
-        const miembro = await this.grupoPersonaRepository.findOne({
-            where: { grupo: { id: grupoId }, userId },
-        });
-
-        if (!miembro) throw new NotFoundException('El miembro no existe');
-
-        miembro.bloqueado = true;
-        await this.grupoPersonaRepository.save(miembro);
-        return { mensaje: 'Miembro bloqueado correctamente' };
+    if (!miembro) {
+      throw new NotFoundException(
+        'El miembro no existe en este grupo',
+      );
     }
 
-    async promoverMiembro(grupoId: number, adminId: string, userId: string): Promise<GrupoPersona> {
-        const grupo = await this.findOne(grupoId);
+    this.mensajeriaGateway.enviarMensajeDirecto(
+      userId,
+      {
+        tipo: 'removido_grupo',
+        grupoId,
+        grupoNombre: grupo.nombre,
+        mensaje: `Fuiste removido del grupo "${grupo.nombre}"`,
+      },
+    );
 
-        if (grupo.adminId !== adminId) {
-            throw new BadRequestException('Solo el administrador puede promover miembros');
-        }
+    await this.grupoPersonaRepository.remove(miembro);
 
-        const miembro = await this.grupoPersonaRepository.findOne({
-            where: { grupo: { id: grupoId }, userId },
-        });
+    return {
+      mensaje: 'Miembro removido correctamente',
+    };
+  }
 
-        if (!miembro) throw new NotFoundException('El miembro no existe');
+  async bloquearMiembro(
+    grupoId: number,
+    adminId: string,
+    userId: string,
+  ): Promise<{ mensaje: string }> {
+    const grupo = await this.findOne(grupoId);
 
-        miembro.rol = 'admin';
-        return this.grupoPersonaRepository.save(miembro);
+    if (grupo.adminId !== adminId) {
+      throw new BadRequestException(
+        'Solo el administrador puede bloquear miembros',
+      );
     }
 
-    async update(id: number, dto: UpdateGrupoDto): Promise<Grupo> {
-        const grupo = await this.findOne(id);
-        Object.assign(grupo, dto);
-        return this.grupoRepository.save(grupo);
+    const miembro =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+        },
+      });
+
+    if (!miembro) {
+      throw new NotFoundException(
+        'El miembro no existe',
+      );
     }
+
+    miembro.bloqueado = true;
+
+    await this.grupoPersonaRepository.save(miembro);
+
+    return {
+      mensaje: 'Miembro bloqueado correctamente',
+    };
+  }
+
+  async promoverMiembro(
+    grupoId: number,
+    adminId: string,
+    userId: string,
+  ): Promise<GrupoPersona> {
+    const grupo = await this.findOne(grupoId);
+
+    if (grupo.adminId !== adminId) {
+      throw new BadRequestException(
+        'Solo el administrador puede promover miembros',
+      );
+    }
+
+    const miembro =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+        },
+      });
+
+    if (!miembro) {
+      throw new NotFoundException(
+        'El miembro no existe',
+      );
+    }
+
+    miembro.rol = 'admin';
+
+    return this.grupoPersonaRepository.save(miembro);
+  }
+
+  // =========================
+  // API NUEVA
+  // =========================
+
+  async promover(
+    grupoId: number,
+    userId: string,
+    solicitanteId: string,
+  ) {
+    await this.verificarAdmin(
+      grupoId,
+      solicitanteId,
+    );
+
+    const miembro =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+        },
+      });
+
+    if (!miembro) {
+      throw new NotFoundException(
+        'Miembro no encontrado',
+      );
+    }
+
+    miembro.rol = 'admin';
+
+    await this.grupoPersonaRepository.save(miembro);
+
+    return { success: true };
+  }
+
+  async remover(
+    grupoId: number,
+    userId: string,
+    solicitanteId: string,
+  ) {
+    await this.verificarAdmin(
+      grupoId,
+      solicitanteId,
+    );
+
+    const miembro =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+        },
+      });
+
+    if (!miembro) {
+      throw new NotFoundException(
+        'Miembro no encontrado',
+      );
+    }
+
+    await this.grupoPersonaRepository.remove(miembro);
+
+    return { success: true };
+  }
+
+  async bloquear(
+    grupoId: number,
+    userId: string,
+    solicitanteId: string,
+  ) {
+    await this.verificarAdmin(
+      grupoId,
+      solicitanteId,
+    );
+
+    const miembro =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+        },
+      });
+
+    if (!miembro) {
+      throw new NotFoundException(
+        'Miembro no encontrado',
+      );
+    }
+
+    miembro.bloqueado = true;
+
+    await this.grupoPersonaRepository.save(miembro);
+
+    return { success: true };
+  }
+
+  private async verificarAdmin(
+    grupoId: number,
+    userId: string,
+  ) {
+    const admin =
+      await this.grupoPersonaRepository.findOne({
+        where: {
+          grupo: { id: grupoId },
+          userId,
+          rol: 'admin',
+        },
+      });
+
+    if (!admin) {
+      throw new ForbiddenException(
+        'Solo los administradores pueden hacer esto',
+      );
+    }
+  }
+
+  async update(
+    id: number,
+    dto: UpdateGrupoDto,
+  ): Promise<Grupo> {
+    const grupo = await this.findOne(id);
+
+    Object.assign(grupo, dto);
+
+    return this.grupoRepository.save(grupo);
+  }
 }

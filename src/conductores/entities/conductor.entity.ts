@@ -9,6 +9,7 @@ export class Conductor {
     @Column({ unique: true })
     licencia?: string;
 
+
     @OneToOne(() => Persona, { cascade: true, eager: true })
     @JoinColumn({ name: 'persona_id' })
     persona!: Persona;

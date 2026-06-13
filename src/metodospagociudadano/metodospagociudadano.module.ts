@@ -9,6 +9,7 @@ import { Transaccion } from '../../src/transacciones/entities/transacciones.enti
 @Module({
   imports: [TypeOrmModule.forFeature([MetodoPagoCiudadano, Transaccion]), MetodospagoModule],  controllers: [MetodospagociudadanoController],
   providers: [MetodosPagoCiudadanoService],
+   exports: [MetodosPagoCiudadanoService],
 })
 export class MetodospagociudadanoModule {}
 
